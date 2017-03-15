@@ -33,7 +33,7 @@ from sklearn.linear_model import ElasticNetCV
 from intervaltree import IntervalTree
 #from intervaltree.bio import GenomeIntervalTree
 
-mutationSeq_version = "4.3.6"
+mutationSeq_version = "4.3.8"
 
 """
 ==============================================================================
@@ -108,15 +108,15 @@ class Classifier(object):
                         input but it does not seem to be the single mode.")
             raise Exception("one bam file specified but not the single mode")
 
+        rmdups = False if self.args.count_duplicate_reads else True
+
         # single mode
         if self.args.single:
             if self.args.deep:
                 self.features_module = features_deep_single
-                self.rmdups = False
 
             else:
                 self.features_module = features_single
-                self.rmdups = True
 
             if not self.samples.get("tumour"):
                 self.type = 'n'
@@ -125,7 +125,7 @@ class Classifier(object):
                 self.bam = pybamapi.Bam(bam=self.samples.get("normal"),
                                         reference=self.ref,
                                         coverage=self.coverage,
-                                        rmdups=self.rmdups,
+                                        rmdups=rmdups,
                                         mapq_threshold=self.mapq_threshold,
                                         baseq_threshold=self.baseq_threshold)
 
@@ -136,7 +136,7 @@ class Classifier(object):
                 self.bam = pybamapi.Bam(bam=self.samples.get("tumour"),
                                         reference=self.ref,
                                         coverage=self.coverage,
-                                        rmdups=self.rmdups,
+                                        rmdups=rmdups,
                                         mapq_threshold=self.mapq_threshold,
                                         baseq_threshold=self.baseq_threshold)
 
@@ -144,11 +144,8 @@ class Classifier(object):
         else:
             if self.args.deep:
                 self.features_module = features_deep
-                self.rmdups = False
-
             else:
                 self.features_module = features
-                self.rmdups = True
 
             logging.info("initializing a PairedBam")
             self.bam = pybamapi.PairedBam(tumour=self.samples.get("tumour"),
@@ -156,7 +153,7 @@ class Classifier(object):
                                           reference=self.samples.get(
                                               "reference"),
                                           coverage=self.coverage,
-                                          rmdups=self.rmdups,
+                                          rmdups=rmdups,
                                           mapq_threshold=self.mapq_threshold,
                                           baseq_threshold=self.baseq_threshold)
 
@@ -175,7 +172,7 @@ class Classifier(object):
 
         man_stream = open(self.args.manifest)
         gtree = defaultdict(lambda: IntervalTree())
-#        gtree = GenomeIntervalTree()
+
         for line in man_stream:
             line = line.strip().split()
             if line[0] == 'chrom':
@@ -186,11 +183,19 @@ class Classifier(object):
             chrom = line[0]
             start = int(line[1])
             end = int(line[2])
+
+            #empty intervals (points) are not allowed.
+            assert end>start, 'amplicon end should be greater than start.'\
+                              ' Please check the manifest file'
+
             gtree[chrom].addi(start, end)
         return gtree
 
     def __get_flanking_regions(self, chromosome, start,stop):
-        vals = self.manifest[chromosome][start:stop]
+        if start == stop:
+            vals = self.manifest[chromosome][start]
+        else:
+            vals = self.manifest[chromosome][start:stop]
         vals = sorted(vals)
             
         if len(vals) > 1:
@@ -280,8 +285,13 @@ class Classifier(object):
         for val in target_positions:
             if None in val:
                 output.append(val)
-                
-            regions = self.manifest[val[0]][val[1]:val[2]]
+                continue
+            
+            if val[1] == val[2]:
+                regions = self.manifest[val[0]][val[1]]
+            else:
+                regions = self.manifest[val[0]][val[1]:val[2]]
+
             for region in regions:
                 start = max(region.begin,val[1])
                 stop = min(region.end,val[2])
@@ -318,12 +328,12 @@ class Classifier(object):
             if self.args.interval:
                 target_positions = self.__filter_positions(target_positions)
 
-        if target_positions == [] and self.args.interval and not self.args.positions_file:
+        if target_positions == [] and self.args.interval and not self.args.positions_file and not self.args.deep:
             target_positions.append(self.__parse_position(self.args.interval))
 
                 
         #if no pos found- then run over whole genome
-        if target_positions == [] and not self.args.interval and not self.args.positions_file:
+        if target_positions == [] and not self.args.interval and not self.args.positions_file and not self.args.deep:
             # get all the common chromosome names
             # chromosome names in tumour bam
             tcn = self.bam.get_refnames().keys()
