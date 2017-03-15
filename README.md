@@ -5,7 +5,7 @@ mapping quality, strand bias and tail distance.
 
 ### Installing MutationSeq
 
-MutationSeq can be downloaded from http://compbio.bccrc.ca/software/mutationseq. For this workshop, version 4.3.8 was used. Once you have downloaded it, extract it:
+MutationSeq can be downloaded from http://compbio.bccrc.ca/software/mutationseq or https://bitbucket.org/shahlabbcca/mutationseq. Once you have downloaded it, extract it:
 
 ```{bash}
 tar -xzvf museq_4.3.8.tar.gz
@@ -47,7 +47,7 @@ conda install -c bioconda numpy=1.7.1 scipy=0.12.0 scikit-learn=0.13.1 matplotli
 
 One last thing that is needed before we can install MutationSeq is the Boost C libraries. We only need to download them from http://www.boost.org/. Once you have downloaded (tested on 1.51) just extract them to a location. For example, you could put it into `$HOME/usr/boost/1.51`
 
-Once this has been installed, we can now proceed to compiling a dependency `pybam.so` (this may be provided in the .tar.gz, but it's better to compile on your own system to ensure that it does work).
+Once this has been installed, we can now proceed to compiling a dependency `pybam.so`.
 
 ```{bash}
 make PYTHON=python BOOSTPATH=$HOME/usr/boost/1.51 -B
