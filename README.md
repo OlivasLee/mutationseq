@@ -3,6 +3,9 @@ mutationSeq is software for somatic SNV detection using next generation sequenci
 a feature-based classifier trained on validated somatic mutation samples while benefiting from other available information such as base quality,
 mapping quality, strand bias and tail distance.
 
+### Note
+`model_single_v4.0.1.npz` and `model_single_v4.0.2_anaconda_sk_0.13.1.npz` are missing from this repository, and can be found at `ftp://ftp.bcgsc.ca/public/shahlab/MutationSeq/`. Once you've acquired those files, place `model_single_v4.0.1.npz` in the root of this repo, and place `model_single_v4.0.2_anaconda_sk_0.13.1.npz` in the `models_anaconda` directory.
+
 ### Installing MutationSeq
 
 MutationSeq can be downloaded from http://compbio.bccrc.ca/software/mutationseq or https://bitbucket.org/shahlabbcca/mutationseq. Once you have downloaded it, extract it:
